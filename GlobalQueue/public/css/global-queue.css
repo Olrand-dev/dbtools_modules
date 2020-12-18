@@ -1,0 +1,28 @@
+.global-queue__tasks-box {
+    margin-top: 15px;
+}
+
+.global-queue__per-page-select {
+    max-width: 75px;
+    margin-top: 21px;
+}
+.global-queue__per-page-select select {
+    position: relative;
+    right: 0;
+}
+
+.global-queue__task-priority {
+    margin: 0 5px;
+}
+
+.global-queue__edit-task-box {
+    margin-bottom: 15px;
+}
+
+.global-queue__task-comment {
+    margin-bottom: 10px;
+}
+
+.global-queue__update-list-btn {
+    margin-top: 24px;
+}

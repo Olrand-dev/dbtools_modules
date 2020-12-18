@@ -1,0 +1,102 @@
+<script type="text/x-template" id="sms-modal-template">
+
+    <div class="modal fade" id="sendSmsModal" tabindex="-1" role="dialog" aria-labelledby="sendSmsModalLabel">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <button 
+                    type="button" 
+                    class="close" 
+                    @click="closeModal"
+                    data-dismiss="modal" 
+                    aria-label="Закрыть"
+                    >
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="sendSmsModalLabel">Отправить смс</h4>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12">
+
+                            <div class="row">
+
+                                <div class="col-md-12 sms-modal_top-data">
+                                    <p>
+                                        <b>Телефон:</b> {{refData.phone}}
+                                    </p>
+                                    <p>
+                                        <b>Остаток на балансе:</b> {{balance}} &#8372;
+                                    </p>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                    <label>Шаблон сообщения</label>
+                                    <select v-model="templateId" class="form-control" @change="getMessage">
+                                        <option 
+                                        v-for="template in templates" 
+                                        :value="template.id"
+                                        >
+                                            {{template.name}}
+                                        </option>
+                                    </select>
+                                    </div>
+                                </div>
+
+                                <div v-if="message.length > 0" class="col-md-12">
+                                    <p v-if="mode === 'show'">
+                                        <b>Сообщение:</b> <span v-html="message">{{message}}</span>
+                                    </p>
+                                </div>
+
+                            </div>
+
+                            <text-editor
+                                v-if="mode === 'edit'"
+                                :text="message"
+                                @on-save-changes="saveEditorContent">
+                            </text-editor>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button 
+                    v-if="uip('sth') && mode === 'show'"
+                    type="button" 
+                    class="btn btn-default" 
+                    @click="send"
+                    >
+                        <i class="fa fa-paper-plane"></i>
+                        Отправить
+                    </button>
+
+                    <button 
+                    v-if="uip('rf9') && mode === 'show'"
+                    type="button" 
+                    class="btn btn-default" 
+                    @click="edit"
+                    >
+                        <i class="fa fa-edit"></i>
+                        Редактировать
+                    </button>
+
+                    <button 
+                    type="button" 
+                    class="btn btn-default"
+                    @click="closeModal"
+                    data-dismiss="modal"
+                    >
+                        Закрыть
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</script>

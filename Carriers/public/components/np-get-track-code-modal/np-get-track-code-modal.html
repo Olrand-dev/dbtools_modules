@@ -1,0 +1,407 @@
+<script type="text/x-template" id="np-get-track-code-modal-template">
+
+    <div 
+    class="modal fade" 
+    id="getTrackCodeModal" 
+    tabindex="-1" 
+    role="dialog" 
+    aria-labelledby="getTrackCodeModalLabel"
+    >
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" @click="closeModal" aria-label="Закрыть">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title" id="getTrackCodeModalLabel">
+                        <span v-if="mode === 'create_new'">Создание</span>
+                        <span v-if="mode === 'stored_data'">Данные</span>
+                        ТТН Новой Почты для заказа #{{ orderData.id }}
+                    </h4>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row">
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Тип плательщика *</label>
+
+                                <select v-if="mode === 'create_new'" v-model="formData.payer_type"
+                                        class="form-control" ref="payer_type_input">
+                                    <option v-for="p_type in payerTypesList" :value="p_type.id">
+                                        {{p_type.name}}
+                                    </option>
+                                </select>
+
+                                <input v-if="storedFormData && mode === 'stored_data'" type="text" class="form-control"
+                                       :value="storedFormData.payer_type_text" readonly>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Форма оплаты *</label>
+
+                                <select v-if="mode === 'create_new'" v-model="formData.payment_method"
+                                        class="form-control" ref="payment_method_input">
+                                    <option v-for="p_method in paymentMethodsList" :value="p_method.id">
+                                        {{p_method.name}}
+                                    </option>
+                                </select>
+
+                                <input v-if="storedFormData && mode === 'stored_data'" type="text" class="form-control"
+                                       :value="storedFormData.payment_method_text" readonly>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Тип груза *</label>
+
+                                <select v-if="mode === 'create_new'" v-model="formData.cargo_type"
+                                        class="form-control" ref="cargo_type_input">
+                                    <option v-for="c_type in cargoTypesList" :value="c_type.id">
+                                        {{c_type.name}}
+                                    </option>
+                                </select>
+
+                                <input v-if="storedFormData && mode === 'stored_data'" type="text" class="form-control"
+                                       :value="storedFormData.cargo_type_text" readonly>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Технология доставки *</label>
+
+                                <select v-if="mode === 'create_new'" v-model="documentType"
+                                        class="form-control" ref="doc_type_input">
+                                    <option v-for="s_type in serviceTypesList" :value="s_type.id">
+                                        {{s_type.name}}
+                                    </option>
+                                </select>
+
+                                <input v-if="storedFormData && mode === 'stored_data'" type="text" class="form-control"
+                                       :value="storedFormData.doc_type_text" readonly>
+                            </div>
+                        </div>
+
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Вес объемный (кг.) *</label>
+
+                                <input v-if="mode === 'create_new'" v-model="volumeWeight"
+                                       type="number" step="0.1" min="0.1"
+                                       class="form-control" :class="{'input-error': errors.volume_weight}">
+
+                                <input v-if="storedFormData && mode === 'stored_data'" type="text" class="form-control"
+                                       :value="storedFormData.volume_weight" readonly>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Вес фактический (кг.) *</label>
+
+                                <input v-if="mode === 'create_new'" v-model="formData.weight"
+                                       type="number" step="0.01" min="0.1"
+                                       class="form-control" :class="{'input-error': errors.weight}">
+
+                                <input v-if="storedFormData && mode === 'stored_data'" type="text" class="form-control"
+                                       :value="storedFormData.weight" readonly>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Количество мест *</label>
+
+                                <input v-if="mode === 'create_new'" v-model="formData.seats_amount"
+                                       type="number" step="1" min="1"
+                                       class="form-control" :class="{'input-error': errors.seats_amount}">
+
+                                <input v-if="storedFormData && mode === 'stored_data'" type="text" class="form-control"
+                                       :value="storedFormData.seats_amount" readonly>
+                            </div>
+                        </div>
+
+
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                <label>Доп. описание (до 50 симв.)</label>
+
+                                <input v-if="mode === 'create_new'" v-model="formData.desc"
+                                       type="text" class="form-control"
+                                       :class="{'input-error': errors.desc}">
+
+                                <input v-if="storedFormData && mode === 'stored_data'" type="text" class="form-control"
+                                       :value="storedFormData.desc" readonly>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Объявленная стоимость (грн.) *</label>
+
+                                <input v-if="mode === 'create_new'" v-model="formData.cost"
+                                       type="number" step="1" min="1"
+                                       class="form-control" :class="{'input-error': errors.cost}">
+
+                                <input v-if="storedFormData && mode === 'stored_data'" type="text" class="form-control"
+                                       :value="storedFormData.cost" readonly>
+                            </div>
+                        </div>
+
+
+                        <div class="col-md-6">
+
+                            <div class="np-get-track-code-modal__search-dropdown">
+                                <div class="form-group">
+
+                                    <label>Город/Населенный п. *</label>
+
+                                    <div v-if="mode === 'create_new'" class="dropdown-input">
+                                        <input v-model="citySearch" type="text" placeholder="Поиск..."
+                                               ref="rec_cityname_input"
+                                               @focus="toggleSearchDropdown('city_search')"
+                                               class="np-get-track-code-modal__search-dropdown-input form-control"
+                                               :class="{'input-error': errors.rec_cityname}">
+                                        <i v-if="sendingRequest" class="fa fa-spinner anim-rotate"></i>
+                                    </div>
+
+                                    <div v-if="mode === 'create_new'" :class="{ show: searchDropdownData.city_search.show }"
+                                        class="np-get-track-code-modal__search-dropdown-content">
+                                    
+                                        <span @click="selectValue('city_search', v.name, v.id, v.value, v.add_data)" v-for="v in recCityNames">{{ v.name }}</span>
+                                    </div>
+
+                                    <input v-if="storedFormData && mode === 'stored_data'" type="text" class="form-control"
+                                           :value="storedFormData.rec_city_name_text" readonly>
+
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <div v-if="mode === 'create_new'" v-show="documentType === 'WarehouseDoors'"
+                             class="col-md-6">
+                            
+                            <div class="np-get-track-code-modal__search-dropdown">
+                                <div class="form-group">
+
+                                    <label v-if="documentType === 'WarehouseDoors'">Улица *</label>
+
+                                    <div class="dropdown-input">
+                                        <input v-model="streetSearch" type="text" placeholder="Поиск..."
+                                               ref="rec_address_street_input"
+                                               @focus="toggleSearchDropdown('street_search')"
+                                               :disabled="recCityRef.length === 0"
+                                               class="np-get-track-code-modal__search-dropdown-input form-control"
+                                               :class="{'input-error': errors.rec_address}">
+                                        <i v-if="sendingRequest" class="fa fa-spinner anim-rotate"></i>
+                                    </div>
+
+                                    <div :class="{ show: searchDropdownData.street_search.show }"
+                                        class="np-get-track-code-modal__search-dropdown-content">
+                                    
+                                        <span @click="selectValue('street_search', v.name, v.id, v.value)" v-for="v in recAddressNames">{{ v.name }}</span>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div v-if="storedFormData && mode === 'stored_data'" class="col-md-6">
+                            <div class="form-group">
+                                <label>Улица *</label>
+                                <input type="text" class="form-control"
+                                       :value="storedFormData.rec_address_street_text" readonly>
+                            </div>
+                        </div>
+
+
+                        <div v-if="mode === 'create_new'" v-show="documentType === 'WarehouseWarehouse'"
+                             class="col-md-6">
+                            <div class="form-group">
+                                <label>Отделение *</label>
+
+                                <select v-model="formData.rec_address"
+                                        class="form-control" ref="rec_address_department_input"
+                                        :class="{'input-error': errors.rec_address}" :disabled="recCityRef.length === 0">
+                                    <option v-for="wh in cityWarehousesList" :value="wh.id">
+                                        {{wh.name}}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div v-if="storedFormData && mode === 'stored_data'" class="col-md-6">
+                            <div class="form-group">
+                                <label>Отделение *</label>
+                                <input type="text" class="form-control"
+                                       :value="storedFormData.rec_address_department_text" readonly>
+                            </div>
+                        </div>
+
+
+                        <div v-if="mode === 'create_new'" v-show="documentType === 'WarehouseDoors'"
+                             class="col-md-4">
+                            <div class="form-group">
+                                <label>Дом *</label>
+
+                                <input v-if="mode === 'create_new'" v-model="formData.rec_house"
+                                       type="text" class="form-control"
+                                       :class="{'input-error': errors.rec_house}">
+                            </div>
+                        </div>
+
+                        <div v-if="storedFormData && mode === 'stored_data'" class="col-md-4">
+                            <div class="form-group">
+                                <label>Дом *</label>
+                                <input type="text" class="form-control"
+                                       :value="storedFormData.rec_house" readonly>
+                            </div>
+                        </div>
+
+
+                        <div v-if="mode === 'create_new'" v-show="documentType === 'WarehouseDoors'"
+                             class="col-md-4">
+                            <div class="form-group">
+                                <label>Квартира *</label>
+
+                                <input v-if="mode === 'create_new'" v-model="formData.rec_flat"
+                                       type="text" class="form-control"
+                                       :class="{'input-error': errors.rec_flat}">
+                            </div>
+                        </div>
+
+                        <div v-if="storedFormData && mode === 'stored_data'" class="col-md-4">
+                            <div class="form-group">
+                                <label>Квартира *</label>
+                                <input type="text" class="form-control"
+                                       :value="storedFormData.rec_flat" readonly>
+                            </div>
+                        </div>
+
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Дата отправки *</label>
+
+                                <input v-if="mode === 'create_new'" v-model="formData.delivery_date"
+                                       type="date" class="form-control"
+                                       :class="{'input-error': errors.delivery_date}">
+
+                                <input v-if="storedFormData && mode === 'stored_data'" type="text" class="form-control"
+                                       :value="storedFormData.delivery_date" readonly>
+                            </div>
+                        </div>
+
+
+                        <div :class="{'col-md-4':documentType === 'WarehouseWarehouse', 'col-md-8':documentType === 'WarehouseDoors'}">
+                            <div class="form-group">
+                                <label>ФИО получателя *</label>
+
+                                <input v-if="mode === 'create_new'" v-model="formData.rec_name"
+                                       type="text" class="form-control"
+                                       :class="{'input-error': errors.rec_name}">
+
+                                <input v-if="storedFormData && mode === 'stored_data'" type="text" class="form-control"
+                                       :value="storedFormData.rec_name" readonly>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label>Телефон *</label>
+
+                                <input v-if="mode === 'create_new'" v-model="formData.rec_phone"
+                                       type="text" class="form-control"
+                                       :class="{'input-error': errors.rec_phone}">
+
+                                <input v-if="storedFormData && mode === 'stored_data'" type="text" class="form-control"
+                                       :value="storedFormData.rec_phone" readonly>
+                            </div>
+                        </div>
+
+
+                        <div v-show="codPayment" class="cod-payment">
+                            <div class="col-md-12">
+                                <h4>Наложенный платеж:</h4>
+                            </div>
+    
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Плательщик доставки денег *</label>
+
+                                    <select v-if="mode === 'create_new'" v-model="formData.cod_payer"
+                                            class="form-control" ref="cp_type_input">
+                                        <option v-for="cp_type in codPayerTypesList" :value="cp_type.id">
+                                            {{cp_type.name}}
+                                        </option>
+                                    </select>
+
+                                    <input v-if="storedFormData && mode === 'stored_data'" type="text" class="form-control"
+                                           :value="storedFormData.cp_type_text" readonly>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Сумма (грн.) *</label>
+
+                                    <input v-if="mode === 'create_new'" v-model="formData.cod_amount"
+                                           type="number" step="1" min="1"
+                                           class="form-control" :class="{'input-error': errors.cod_amount}">
+
+                                    <input v-if="storedFormData && mode === 'stored_data'" type="text" class="form-control"
+                                           :value="storedFormData.cod_amount" readonly>
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-md-12 send-result">
+                            <span v-if="formSendingResult === 'success'" class="text-green">
+                                Экспресс-накладная успешно создана. Номер накладной сохранен в заказе.
+                            </span>
+                            <span v-if="formSendingResult === 'error'" class="text-red">
+                                Ошибка создания экспресс-накладной.
+                            </span>
+                            <span v-if="formSendingResult === 'incorrect_track_code'" class="text-red">
+                                Получен некорректный код ТТН.
+                            </span>
+                            <span v-if="formSendingResult === 'validate_errors'" class="text-red">
+                                <b>Есть ошибки валидации:</b>
+                                <ul class="np-get-track-code-modal__errors-list">
+                                    <li v-for="error in errorMsgList">
+                                        {{ error }}
+                                    </li>
+                                </ul>
+                            </span>
+                        </div>
+
+                    </div>
+                </div>
+
+
+                <div class="modal-footer">
+                    <button v-if="mode === 'create_new'" type="button" style="float:left" class="btn btn-primary" @click="sendForm">
+                        Создать ТТН <i v-if="gettingTrackCode" class="fa fa-spinner anim-rotate" style="color:#fff;margin-left:5px"></i>
+                    </button>
+                    <button type="button" style="float:right" class="btn btn-default" @click="closeModal" data-dismiss="modal">
+                        Закрыть
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</script>

@@ -1,0 +1,137 @@
+<script type="text/x-template" id="editable-list-template">
+
+    <div class="row">
+        <div :class="divWidthClass">
+
+            <div class="table-responsive no-padding">
+
+                <table class="table table-hover editable-table">
+                    <tbody>
+
+                        <tr class="control-row">
+                            <th :colspan="colsNum">
+                                <h4>{{ config['list_title'] }}</h4>
+                            </th>
+                        </tr>
+
+                        <tr class="control-row">
+                            <td :colspan="colsNum">
+
+                                <button title="добавить строку" class="btn btn-default btn-sm" @click="addRow">
+                                    <i class="fa fa-plus"></i>
+                                </button>
+
+                                <button title="обновить" class="btn btn-default btn-sm" @click="updateRows">
+                                    <i class="fa fa-sync-alt" :class="{ 'anim-rotate': listUpdating }"></i>
+                                </button>
+
+                            </td>
+                        </tr>
+                            
+                        <tr>
+                            <th v-for="colConf in colsConfig">
+                                {{ colConf.title }}
+                            </th>
+                            <th></th>
+                        </tr>
+                            
+                        <tr v-if="pageData && pageData.length === 0">
+                            <td :colspan="colsNum">
+                                {{ config['empty_list_msg'] }}
+                            </td>
+                        </tr>
+
+                        <tr v-for="(row, index) in pageData" :key="row.id">
+
+                            <template v-if="rowMode === 'show' || (rowMode === 'edit' && row.id !== editedRow.id)">
+
+                                <td v-for="colConf in colsConfig" :class="{ 'editable-field': colConf.editable }"
+                                    @click="editRow(index)">
+
+                                    <span v-if="colConf.type === 'list' && row[colConf.model] && colConf.options[row[colConf.model]]">
+                                        {{ colConf.options[row[colConf.model]].key }} 
+                                        <span class="text-middlegray text-sm">
+                                            ({{ colConf.options[row[colConf.model]].value }})
+                                        </span>
+                                    </span>
+                                    <span v-if="colConf.type === 'list' && !row[colConf.model]">--</span>
+                                    <span v-if="colConf.type === 'switch'">{{ row[colConf.model] }}</span>
+                                    <span v-if="colConf.type !== 'list'">{{ row[colConf.model] }}</span>
+                                </td>
+
+                                <td class="row-controls">
+                                    <button title="удалить строку" style="float:right"
+                                        class="btn btn-default btn-sm" @click="removeRow(index)">
+
+                                        <i class="fa fa-times"></i>
+                                    </button>
+                                </td>
+
+                            </template>
+
+                            <template v-if="rowMode === 'edit' && row.id === editedRow.id">
+
+                                <template v-for="colConf in colsConfig">
+
+                                    <td v-if="colConf.type === 'static'">
+                                        {{ editedRow[colConf.model] }}
+                                    </td>
+
+                                    <td v-if="colConf.type === 'text-filled-static' && pageData[index][colConf.model].length === 0">
+                                        <input type="text" class="edit-field" v-model="editedRow[colConf.model]">
+                                    </td>
+                                    <td v-if="colConf.type === 'text-filled-static' && pageData[index][colConf.model].length > 0">
+                                        {{ editedRow[colConf.model] }}
+                                    </td>
+
+                                    <td v-if="colConf.type === 'text'">
+                                        <input type="text" class="edit-field" v-model="editedRow[colConf.model]">
+                                    </td>
+
+                                    <td v-if="colConf.type === 'number'">
+                                        <input type="number" :step="colConf.options.step" min="0" class="edit-field"
+                                            v-model="editedRow[colConf.model]">
+                                    </td>
+
+                                    <td v-if="colConf.type === 'list'">
+                                        <select class="form-control edit-field" v-model="editedRow[colConf.model]">
+                                            <option v-for="option in colConf.options" :value="option.value">
+                                                {{ option.key }}
+                                            </option>
+                                        </select>
+                                    </td>
+
+                                </template>
+                                
+                                <td class="row-controls">
+
+                                    <button title="отмена" style="float:right"
+                                    class="btn btn-default btn-sm" @click="cancelEditRow">
+                                        <i class="fa fa-ban"></i>
+                                    </button>
+                                    <button title="сохранить строку" style="float:right"
+                                    class="btn btn-default btn-sm" @click="saveRow">
+                                        <i class="fa fa-save"></i>
+                                    </button>
+
+                                </td>
+
+                            </template>
+
+                        </tr>
+
+                        <tr class="control-row">
+                            <td :colspan="colsNum">
+                                <pagination-admin @paginate="paginate" :data-length="dataLength"></pagination-admin>
+                            </td>
+                        </tr>
+            
+                    </tbody>
+                </table>
+            
+            </div>
+        </div>
+
+    </div>
+
+</script>

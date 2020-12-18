@@ -1,0 +1,241 @@
+<?php $this->layout('layouts::main', ['data' => $data]) ?>
+
+<div id="global-queue" class="row">
+    <div v-if="uip('yyt')">
+
+        <div  class="col-md-8">
+            <div class="box">
+    
+                <div class="box-body">
+
+                    <div class="col-md-5">
+                        <div class="form-group">
+                            <label>Тип задачи</label>
+                            <select v-model="tasksType" @change="getTasksList" class="form-control">
+                                <option v-for="type in taskTypes" :key="type.alias" :value="type.alias">
+                                    {{ type.name }}
+                                </option>
+                                <option value="all">Все</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-7">
+
+                        <div class="col-md-9">
+                            <div class="form-group">
+                                <label>Сортировка</label>
+                                <select v-model="sortType" @change="getTasksList" class="form-control">
+                                    <option v-for="sort in sortTypes" :key="sort.alias" :value="sort.alias">
+                                        {{ sort.name }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 text-right">
+                            <button type="button" class="btn btn-default global-queue__update-list-btn" 
+                                @click="updateList">
+                                <i class="fa fa-sync-alt"></i>
+                            </button>
+                        </div>
+
+                    </div>
+    
+                </div>
+    
+            </div>
+        </div>
+
+
+        <div class="col-md-8">
+            <div class="box">
+                <div class="box-body">
+
+                    <ul class="nav nav-tabs">
+
+                        <li v-for="status in taskStatuses" :key="status.alias" @click="selectStatus(status.alias)"
+                            :class="{ 'active': status.alias === tasksStatus }">
+                            <a data-toggle="tab" :href="'#' + status.alias">
+                                {{ status.name }}
+                            </a>
+                        </li>
+
+                    </ul>
+
+                    <div class="tab-content global-queue__tasks-box">
+
+                        <div v-for="status in taskStatuses" :key="status.alias"
+                            :id="status.alias" class="tab-pane fade in" :class="{ 'active': status.alias === tasksStatus }">
+
+                            <div v-if="tasksList.length > 0 && !pending" v-for="task in tasksList" :key="task.id" class="panel panel-default">
+
+                                <div class="panel-heading">
+                                    <div class="row">
+
+                                        <div class="col-md-6 text-left">
+                                            <span class="text-muted">#{{ task.id }}</span>
+                                            <span class="global-queue__task-priority">
+                                                <i class="fas fa-signal"></i> <b>{{ task.priority }}</b>
+                                            </span> 
+                                            {{ task.name }}
+                                        </div>
+                                        <div class="col-md-6 text-right">
+                                            <span class="create-time">
+                                                <i class="fa fa-clock"></i> {{ task.createDatetime }}
+                                            </span>
+                                            <span v-if="task.finished" class="finish-time">
+                                                <i class="fa fa-arrow-right"></i> {{ task.finishDatetime }}
+                                            </span>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                                <div class="panel-body">
+                                    <div class="row">
+
+                                        <div class="col-md-12">
+                                            <div class="progress sm">
+                                                <div class="progress-bar progress-bar-striped" 
+                                                    :class="{ 'progress-bar-success': task.percCompleted === 100, 'active': task.percCompleted < 100 }"
+                                                    role="progressbar" :aria-valuenow="task.percCompleted" aria-valuemin="0" 
+                                                    aria-valuemax="100" :style="'width: ' + task.percCompleted + '%'">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div v-if="task.comment.length > 0" class="col-md-12 global-queue__task-comment">
+                                            <p class="text-muted">
+                                                {{ task.comment }}
+                                            </p>
+                                        </div>
+
+                                        <div v-if="task.description.length > 0" class="col-md-12">
+                                            <p>
+                                                {{ task.description }}
+                                            </p>
+                                        </div>
+
+                                        <div class="col-md-12">
+
+                                            <div class="col-md-6">
+                                                <b>Выполнено:</b> {{ task.percCompleted }}%
+                                            </div>
+
+                                            <div class="col-md-6 text-right">
+                                                <button class="btn btn-primary btn-sm" @click="editTask(task.id)">
+                                                    <i class="fa fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-default btn-sm" @click="deleteTask(task.id)">
+                                                    <i class="fa fa-trash-alt"></i>
+                                                </button>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div v-if="tasksList.length === 0 && !pending">
+                                <div class="col-12">
+                                    <p class="text-center text-muted">
+                                        Нет данных для отображения.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div v-if="pending">
+                                <div class="col-12">
+                                    <p class="text-center text-muted">
+                                        <i class="fa fa-spinner anim-rotate"></i>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                        </div>
+                        
+                    </div>
+                    
+
+                    <div v-if="tasksList.length > 0 && !pending" class="col-md-12">
+
+                        <div class="row">
+                            <div class="col-md-10 text-left">
+
+                                <pagination :page="page" :pagination-config="paginationConfig" @on-paginate="paginate"></pagination>
+
+                            </div>
+                            <div class="col-md-2">
+
+                                <div class="form-group pull-right global-queue__per-page-select">
+                                    <select v-model="perPage" @change="getTasksList" class="form-control">
+
+                                        <option value="6">6</option>
+                                        <option value="12">12</option>
+                                        <option value="24">24</option>
+
+                                    </select>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        
+        <div v-if="mode === 'edit'" class="col-md-4">
+            <div class="box">
+
+                <div class="box-header">
+                    <h4>
+                        Редактирование задачи #{{ editedTask.id }}
+                    </h4>
+                </div>
+
+                <div class="box-body">
+
+                    <div class="row">
+
+                        <div class="col-md-12 global-queue__edit-task-box">
+
+                            <div v-if="editedTask.status !== 'finished'" class="col-md-6">
+                                <div class="form-group">
+                                    <label>Приоритетность</label>
+                                    <input v-model="editedTask.priority" type="number" step="1" min="1" class="form-control">
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Комментарий</label>
+                                    <textarea v-model="editedTask.comment" class="form-control"></textarea>
+                                </div>
+                            </div>
+                            
+                        </div>
+
+                        <div class="col-md-12">
+                            <button type="button" class="btn btn-default" @click="saveTask">
+                                <i class="fa fa-save"></i> Сохранить
+                            </button>
+                            <button type="button" class="btn btn-default" @click="cancelEdit">
+                                <i class="fa fa-ban"></i> Отмена
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
